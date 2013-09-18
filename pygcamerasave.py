@@ -60,7 +60,7 @@ try:
         screen.blit(mysurf, (0, 0))
         pygame.display.flip()
 
-        pygame.image.save(mysurf, "pyg%04d.png" % count)
+        pygame.image.save(mysurf, "temp/pyg%04d.png" % count)
         count += 1
 finally:
     time.sleep(1)
