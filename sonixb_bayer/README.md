@@ -1,25 +1,25 @@
-## Description
+# Description
 
 This program demonstrates how to decode RAW data taken from a camera via L4l2 interface. Pygame camera module is used to grab the raw data as getting the processed image consistently crashed my Python. RAW image data which is in Bayer pattern is then converted to RGB or BW using a  couple of selectable filters.
 
-# Disclaimer
+## Disclaimer
 
 The program works with a specific model of a USB camera on Raspberry Pi. There is no guarantee that this program will work with any other hardware/driver combination.
 
-# Camera driver
+## Camera driver
 
 sonixb
 
-# Pixel formats advertised by the camera
+## Pixel formats advertised by the camera
 
 - S910
 - BA81
 
-# Camera image width/height
+## Camera image width/height
 
 160x120 - at least I could not make the driver to get anything better
 
-# Usage
+## Usage
 
 `python3 cambayer.py`
 
