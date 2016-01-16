@@ -1,13 +1,14 @@
 import pygame
 import pygame.camera
 import pygame.image
+import subprocess
 
 import datetime
 
 # written by Quiath, 2016
 
-CamW = 160
-CamH = 120    
+CAMERA_INDEX = 0
+CamW, CamH = 0, 0
 
 def rgb_filter1D(s, i, rx, ry):
     v = int(s[i])
@@ -120,19 +121,71 @@ def bw_filter_block(s, i, rx, ry):
     v = v >> 2
     return (v, v, v)
 
+def verify_fallback(devicestr):
+    use_fallback = False
+    try:
+        ret = subprocess.check_output(["fswebcam",
+                                       "-d",
+                                       devicestr,
+                                       "--list-controls"],
+                                       stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as err:
+        print("fswebcam returned an error", err)
+    except FileNotFoundError as err:
+        print("Cannot find fswebcam", err)
+    else:
+        ret = str(ret)
+        use_fallback = ret.find("Brightness") >= 0
+    return use_fallback
+    
+
+def set_controls(cam, devicestr, flip1, flip2, brightness, use_fallback):
+    success = False
+    try:
+        cam.set_controls(flip1, flip2, brightness)
+        success = True
+    except SystemError as se:
+        print("Exception:", se)
+    if not success and use_fallback:
+        try:
+            ret = subprocess.check_output(["fswebcam",
+                                           "-d",
+                                           devicestr,
+                                           "-s",
+                                           "brightness=%d" % brightness],
+                                           stderr=subprocess.STDOUT)
+            ret = str(ret)
+            success = ret.find("Setting Brightness to %d" % brightness) >= 0
+        except subprocess.CalledProcessError as err:
+            print("fswebcam returned an error", err)
+        except FileNotFoundError as err:
+            print("Cannot find fswebcam", err)
+    if success:
+        print("Successfully set controls " +
+              "using fallback" if use_fallback else "")
+    else:
+        print("Could not set controls " +
+              "using fallback" if use_fallback else "")
+    return success
+
 def main():
     try:
         pygame.init()
         pygame.camera.init()
         cam = None
         camlist = pygame.camera.list_cameras()
+        print(camlist)
 
         if len(camlist) < 1:
             print("No camera found")
             return
 
-        cam = pygame.camera.Camera(camlist[0], (CamW, CamH))
+        use_fallback = verify_fallback(camlist[CAMERA_INDEX])
+
+        cam = pygame.camera.Camera(camlist[CAMERA_INDEX])
         cam.start()
+        global CamW, CamH
+        (CamW, CamH) = cam.get_size()
         screen_width = 640
         screen_height = 480
 
@@ -148,6 +201,8 @@ def main():
         the_name = "filter1D"
 
         while not done:
+            (flip1, flip2, brightness) = cam.get_controls()
+            print("brightness=", brightness)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     done = True
@@ -175,7 +230,18 @@ def main():
                         the_name = "filterBW"             
                     elif event.key == pygame.K_8:
                         the_filter = bw_filter_block
-                        the_name = "filterBlock"             
+                        the_name = "filterBlock"
+                    elif event.key == pygame.K_EQUALS:
+                        brightness = min(255, brightness + 32)
+                        set_controls(cam, camlist[CAMERA_INDEX],
+                                     flip1, flip2, brightness,
+                                     use_fallback)
+                    elif event.key == pygame.K_MINUS:
+                        brightness = max(0, brightness - 32)
+                        set_controls(cam, camlist[CAMERA_INDEX],
+                                     flip1, flip2, brightness,
+                                     use_fallback)
+                
             
             # get the image from the camera            
             t0 = datetime.datetime.now()
