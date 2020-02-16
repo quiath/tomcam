@@ -8,5 +8,5 @@ This is a set of short Python3 programs implementing some basic video processing
 - `stabilizer` - Try to stabilize the image using a very straightforward approach
 - `sonixb_bayer` - Process RAW Bayer pixels from a poorly supported (on RPi) webcam 
 - `sonixb_bayer_py2` - Python 2 version of the RAW Bayer pixel processing app above
-- `motion_detect' - Motion detection using ffmpeg & PIL (no OpenCV)
+- `motion_detect` - Motion detection using ffmpeg & PIL (no OpenCV)
 
